@@ -8,6 +8,8 @@ Read-only dashboard for BTC options on Delta Exchange India. It places no orders
 - Realised volatility from Delta 1-minute candles, Deribit DVOL and Deribit implied volatility
 - Funding and open interest on Binance, Bybit, OKX, Deribit and Delta
 - Scheduled events from official Fed and BLS calendars
+- Colour-coded market signals (trend, option price vs realised vol, funding, venue agreement, events, data health)
+- History panel from Supabase: typical 5:30 PM to 5:30 PM move, last 14 days, weekday and hourly activity (optional)
 
 Every source shows its own age. Stale or failed sources are marked and left out of calculations.
 
@@ -16,7 +18,9 @@ Every source shows its own age. Stale or failed sources are marked and left out 
 - `api/health.js` per-source status with a raw response sample (use after deploying)
 - `lib/` source adapters, pure calculations (`calc.js`), time rules (`time.js`), events (`events-data.js`)
 - `public/` the page (no build step)
-- `test/` 25 tests: `npm test`
+- `api/history.js` history from Supabase (optional)
+- `supabase/` database migrations, Colab loader and notes (see `supabase/README.md`)
+- `test/` tests: `npm test`
 
 ## Deploy
 1. Put these files in the GitHub repo (main branch).
@@ -28,6 +32,9 @@ Every source shows its own age. Stale or failed sources are marked and left out 
 
 `vercel.json` runs the functions in Mumbai (`bom1`).
 
+## Connect Supabase (optional)
+The page works without it. To turn on the History panel, follow `supabase/README.md`, then in Vercel add `SUPABASE_URL` and `SUPABASE_ANON_KEY` and redeploy. Use the anon/publishable key only, never the service_role key.
+
 ## Keep it accurate
 - Events live in `lib/events-data.js`. Add a row only with an official source link, then run `npm test`.
 - Formulas live in `lib/calc.js` and are versioned (`CALC_VERSION`). Change a formula, bump the version, update the tests.
@@ -35,5 +42,5 @@ Every source shows its own age. Stale or failed sources are marked and left out 
 
 ## Limits
 - Polling every 10 seconds, not a live stream. Live liquidation streams need an always-on server.
-- No history yet (no IV percentile). That needs a database and a scheduled collector.
+- History covers the downloaded year. Live IV percentile needs a scheduled collector writing snapshots to Supabase (not built yet).
 - Delta's funding-rate units are shown raw until confirmed against Delta's docs.

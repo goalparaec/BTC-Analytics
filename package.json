@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Read-only BTC options dashboard for Delta Exchange India (Vercel + GitHub)",
   "scripts": {
-    "test": "node --test test/calc.test.js test/time.test.js test/snapshot.test.js"
+    "test": "node --test test/calc.test.js test/time.test.js test/snapshot.test.js test/history.test.js test/signals.test.js"
   },
   "engines": { "node": ">=20" }
 }
