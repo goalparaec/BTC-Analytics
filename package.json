@@ -1,0 +1,11 @@
+{
+  "name": "btc-options-desk",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Read-only BTC options dashboard for Delta Exchange India (Vercel + GitHub)",
+  "scripts": {
+    "test": "node --test test/calc.test.js test/time.test.js test/snapshot.test.js"
+  },
+  "engines": { "node": ">=20" }
+}
