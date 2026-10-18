@@ -1,0 +1,52 @@
+# Adds new BTC data from Delta Exchange to Supabase every day. Free on GitHub Actions.
+# Needs 3 repository secrets: PGHOST, PGUSER, PGPASSWORD (Supabase Session pooler values).
+name: Collect Delta data
+
+on:
+  schedule:
+    - cron: "30 13 * * *"   # 13:30 UTC = 7:00 PM IST, after the 5:30 PM IST expiry
+  workflow_dispatch:         # lets you start it by hand from the Actions tab
+
+permissions:
+  contents: read
+
+concurrency:
+  group: collect-delta
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      PGHOST: ${{ secrets.PGHOST }}
+      PGUSER: ${{ secrets.PGUSER }}
+      PGPASSWORD: ${{ secrets.PGPASSWORD }}
+      PGPORT: "5432"
+      PGDATABASE: postgres
+      PGSSLMODE: require
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check database connection
+        run: psql -v ON_ERROR_STOP=1 -c "select 'connected' as status"
+
+      - name: Find what is already stored
+        id: last
+        run: |
+          echo "spot=$(psql -At -c "select coalesce(extract(epoch from max(ts))::bigint, 0) from public.btc_spot_1h")" >> "$GITHUB_OUTPUT"
+          echo "expiry=$(psql -At -c "select coalesce(extract(epoch from max(expiry_ts))::bigint, 0) from public.option_contracts")" >> "$GITHUB_OUTPUT"
+
+      - name: Download new data from Delta
+        run: python3 collector/collect_delta.py --out out --last-spot-ts "${{ steps.last.outputs.spot }}" --last-expiry-ts "${{ steps.last.outputs.expiry }}"
+        continue-on-error: true
+        id: dl
+
+      - name: Load into Supabase
+        run: cd out && psql -v ON_ERROR_STOP=1 -q -f ../supabase/load/load_csv.sql
+
+      - name: Fail the run if some days are still missing
+        if: steps.dl.outcome == 'failure'
+        run: |
+          echo "Some Delta data could not be downloaded. What was complete is saved. The next run retries the rest."
+          exit 1

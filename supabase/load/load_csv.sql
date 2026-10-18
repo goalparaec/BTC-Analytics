@@ -11,7 +11,10 @@ create temp table s_spot (time_utc text, time_ist text, open numeric, high numer
 \copy s_spot from 'btc_spot_1h.csv' with (format csv, header true)
 insert into public.btc_spot_1h (ts, open, high, low, close, volume)
 select (time_utc || ' UTC')::timestamptz, open, high, low, close, volume from s_spot
-on conflict (ts) do nothing;
+on conflict (ts) do update set open = excluded.open, high = excluded.high, low = excluded.low,
+  close = excluded.close, volume = excluded.volume
+  where (public.btc_spot_1h.open, public.btc_spot_1h.high, public.btc_spot_1h.low, public.btc_spot_1h.close)
+        is distinct from (excluded.open, excluded.high, excluded.low, excluded.close);  -- fixes a candle that was unfinished when first saved
 
 create temp table s_prod (symbol text, type text, strike numeric, expiry_utc text, expiry_ts bigint, spot_day_before numeric);
 \copy s_prod from 'btc_options_products.csv' with (format csv, header true)

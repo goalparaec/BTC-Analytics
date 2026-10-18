@@ -19,6 +19,7 @@ Every source shows its own age. Stale or failed sources are marked and left out 
 - `lib/` source adapters, pure calculations (`calc.js`), time rules (`time.js`), events (`events-data.js`)
 - `public/` the page (no build step)
 - `api/history.js` history from Supabase (optional)
+- `collector/` + `.github/workflows/collect-delta.yml` daily job that adds new Delta data to Supabase
 - `supabase/` database migrations, Colab loader and notes (see `supabase/README.md`)
 - `test/` tests: `npm test`
 
